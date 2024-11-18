@@ -1,6 +1,8 @@
 package main
 
 import (
+	"game/components"
+	"game/consts"
 	"game/controls"
 	"game/states"
 
@@ -13,18 +15,13 @@ import (
 	"github.com/hajimehoshi/ebiten/v2"
 )
 
-const (
-	gameWidth  = 600
-	gameHeight = 600
-)
-
 type mainGame struct {
 	world        w.World
 	stateMachine s.StateMachine
 }
 
 func (game *mainGame) Layout(outsideWidth, outsideHeight int) (int, int) {
-	return gameWidth, gameHeight
+	return consts.WindowWidth, consts.WindowHeight
 }
 
 func (game *mainGame) Update() error {
@@ -37,11 +34,12 @@ func (game *mainGame) Draw(screen *ebiten.Image) {
 }
 
 func main() {
-	world := w.InitWorld(nil)
+	world := w.InitWorld(&components.GameComponents{})
 
 	// Init screen dimensions
-	world.Resources.ScreenDimensions = &r.ScreenDimensions{Width: gameWidth, Height: gameHeight}
+	world.Resources.ScreenDimensions = &r.ScreenDimensions{Width: consts.WindowWidth, Height: consts.WindowHeight}
 
+	// Init controls
 	axes := []string{}
 	actions := []string{
 		controls.MoveUpAction, controls.MoveDownAction, controls.MoveLeftAction, controls.MoveRightAction,
@@ -50,12 +48,17 @@ func main() {
 	world.Resources.Controls = &controls
 	world.Resources.InputHandler = &inputHandler
 
+	// Init fonts
 	fonts := loader.LoadFonts("etc/fonts.toml")
 	world.Resources.Fonts = &fonts
 
+	// Init sprite sheets
+	spriteSheets := loader.LoadSpriteSheets("etc/spritesheets.toml")
+	world.Resources.SpriteSheets = &spriteSheets
+
 	ebiten.SetWindowResizingMode(ebiten.WindowResizingModeEnabled)
-	ebiten.SetWindowSize(gameWidth, gameHeight)
+	ebiten.SetWindowSize(consts.WindowWidth, consts.WindowHeight)
 	ebiten.SetWindowTitle("")
 
-	utils.LogError(ebiten.RunGame(&mainGame{world, s.Init(&states.GameplayState{}, world)}))
+	utils.LogError(ebiten.RunGame(&mainGame{world, s.Init(&states.GridState{}, world)}))
 }
